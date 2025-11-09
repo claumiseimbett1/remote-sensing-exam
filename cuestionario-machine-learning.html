@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Machine Learning</title>
+    <!-- Incluir jsPDF desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="search"],
+        input[type="tel"],
+        input[type="url"],
+        textarea {
+            font-size: 16px;
+        }
+
+
+        #user-info-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #28a745;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #user-info-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #user-info-screen #logo-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #user-info-screen h2 {
+            color: #000;
+            margin-bottom: 10px;
+            font-size: 1.7em;
+            text-align: center;
+        }
+        #user-info-screen h1 {
+            color: #000;
+            margin-bottom: 15px;
+            font-size: 2em;
+            text-align: center;
+        }
+        #user-info-screen p {
+            color: #000;
+            margin-bottom: 25px;
+            text-align: center;
+            max-width: 90%;
+            font-size: 1em;
+        }
+
+        #user-info-form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        #user-info-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 1em;
+        }
+
+        #user-info-form input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #user-info-form input[type="text"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            outline: none;
+        }
+
+
+        #start-quiz-button {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #start-quiz-button:hover {
+            background-color: #218838;
+        }
+        #start-quiz-button:active {
+            transform: translateY(1px);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: -15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .quiz-container {
+            width: 95%;
+            max-width: 850px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+            box-sizing: border-box;
+        }
+
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        #logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 0 auto 15px auto;
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+
+        #logo-container img {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+        }
+
+
+        .quiz-header h1 {
+            color: #28a745;
+            margin-bottom: 8px;
+            font-size: 1.8em;
+        }
+        .quiz-header p {
+            font-size: 1em;
+            color: #28a745;
+        }
+
+
+        .section-title {
+            font-size: 1.4em;
+            color: #28a745;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 6px;
+        }
+
+        .question-block {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #fdfdff;
+            border-left: 5px solid #28a745;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-size: 1.05em;
+            color: #28a745;
+        }
+
+        .options label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s, border-color 0.2s;
+            border: 1px solid #e0e0e0;
+            background-color: #fff;
+        }
+
+        .options label:hover {
+            background-color: #f0f8ff;
+            border-color: #b3d7ff;
+        }
+
+        .options input[type="radio"] {
+            margin-right: 10px;
+            vertical-align: middle;
+            transform: scale(1);
+        }
+
+        .correct-answer {
+            color: #155724;
+            font-weight: bold;
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+        }
+
+        .incorrect-answer {
+            color: #721c24;
+            font-weight: bold;
+            background-color: #f8d7da !important;
+            border-color: #f5c6cb !important;
+        }
+
+        .user-selected.incorrect-answer {
+             text-decoration: line-through;
+        }
+
+        #submit-button {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #submit-button:hover {
+            background-color: #0056b3;
+        }
+        #submit-button:active {
+            transform: translateY(1px);
+        }
+
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f9ff;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            border: 1px solid #b3d7ff;
+        }
+        #results.hidden {
+            display: none;
+        }
+        #results p {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        #results strong {
+            color: #28a745;
+        }
+        #email-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        #email-link:hover {
+            background-color: #218838;
+        }
+         #email-link:active {
+            transform: translateY(1px);
+        }
+        .pdf-info {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        @media (min-width: 600px) {
+            #user-info-screen h2 { font-size: 1.8em; }
+            #user-info-screen h1 { font-size: 2.2em; }
+            #user-info-screen p { font-size: 1.1em; max-width: 450px; }
+            #user-info-form { padding: 35px; width: 100%; max-width: 420px;}
+            #start-quiz-button { font-size: 1.2em; }
+            .quiz-container { padding: 25px; margin: 30px auto; width: 95%;}
+            #logo-container { gap: 30px; }
+            #logo-container img { height: 80px; }
+            .quiz-header h1 { font-size: 2em; }
+            .quiz-header p { font-size: 1.1em; }
+            .section-title { font-size: 1.6em; }
+            .question-block { padding: 20px; border-left-width: 6px; }
+            .question-text { font-size: 1.1em; }
+            .options label { padding: 12px; }
+            .options input[type="radio"] { transform: scale(1.1); }
+            #submit-button { padding: 15px; font-size: 1.3em; }
+            #results { padding: 25px; font-size: 1.2em; }
+            #email-link { padding: 12px 25px; font-size: 1.05em; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="user-info-screen">
+        <div id="logo-container">
+            <img src="logos/AGTECH_PROGRAM_LOGO.webp" alt="Logo AgTech Program">
+            <img src="logos/Logo-Claudia_Transp.png" alt="Logo Claudia">
+        </div>
+        <form id="user-info-form">
+            <h2>Bienvenido/a al</h2>
+            <h1>Quiz: Machine Learning</h1>
+            <p>Por favor, ingresa tu nombre y apellido para comenzar la evaluación.</p>
+            <div>
+                <label for="firstName">Nombre:</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+            <div>
+                <label for="lastName">Apellido:</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+            <div id="name-error" class="error-message" style="display:none;">Por favor, completa ambos campos.</div>
+            <button type="submit" id="start-quiz-button">Comenzar Quiz</button>
+        </form>
+    </div>
+
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <div id="logo-container">
+                <img src="logos/Logo-Claudia_Transp.png" alt="Logo Claudia">
+                <img src="logos/AGTECH_PROGRAM_LOGO.webp" alt="Logo AgTech Program">
+            </div>
+            <h1>Quiz: Machine Learning</h1>
+            <p>Por Claudia Serpa</p>
+        </div>
+        <form id="quiz-form">
+            <!-- Las preguntas se insertarán aquí por JavaScript -->
+        </form>
+        <button id="submit-button">Evaluar Respuestas</button>
+        <div id="results" class="hidden"></div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        const quizData = [
+            {
+                section: "1. Fundamentos de IA y ML",
+                question: "¿Cuál es la relación principal entre Inteligencia Artificial (IA) y Machine Learning (ML)?",
+                options: {
+                    a: "Son dos campos completamente separados.",
+                    b: "La IA es un subcampo del ML.",
+                    c: "El ML es un subcampo de la IA.",
+                    d: "IA y ML son exactamente lo mismo."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué tipo de aprendizaje de máquina utiliza datos de entrada y sus etiquetas de salida correctas para entrenar?",
+                options: {
+                    a: "Aprendizaje Supervisado",
+                    b: "Aprendizaje No Supervisado",
+                    c: "Aprendizaje por Refuerzo",
+                    d: "Aprendizaje Semi-supervisado"
+                },
+                correctAnswer: "a"
+            },
+            {
+                question: "Un algoritmo que aprende a jugar ajedrez mejorando sus movimientos basado en si gana o pierde (recompensas o castigos) es un ejemplo de:",
+                options: {
+                    a: "Aprendizaje Supervisado",
+                    b: "Aprendizaje por Refuerzo",
+                    c: "Aprendizaje No Supervisado",
+                    d: "Aprendizaje por Ensambles"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Cuál es el objetivo principal del Aprendizaje No Supervisado?",
+                options: {
+                    a: "Predecir un valor numérico basándose en datos etiquetados.",
+                    b: "Clasificar datos en categorías predefinidas.",
+                    c: "Encontrar patrones ocultos o estructuras en datos no etiquetados.",
+                    d: "Tomar decisiones secuenciales para maximizar una recompensa."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué método combina múltiples modelos de machine learning para obtener un rendimiento predictivo mejor que el de cualquiera de los modelos constituyentes por sí solo?",
+                options: {
+                    a: "Aprendizaje por Refuerzo",
+                    b: "Aprendizaje por Ensambles (Ensemble)",
+                    c: "Regresión Lineal",
+                    d: "K-Means"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿En qué se diferencia el Machine Learning de la programación tradicional?",
+                options: {
+                    a: "El ML no utiliza algoritmos.",
+                    b: "En la programación tradicional, se definen reglas explícitas; en el ML, el sistema aprende las reglas a partir de los datos.",
+                    c: "El ML solo funciona con números, la programación tradicional funciona con texto.",
+                    d: "No hay ninguna diferencia real."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "Un sistema que agrupa artículos de noticias sobre el mismo tema sin saber de antemano cuáles son los temas, ¿qué tipo de aprendizaje utiliza?",
+                options: {
+                    a: "Supervisado",
+                    b: "No Supervisado",
+                    c: "Por Refuerzo",
+                    d: "Por Ensambles"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "El aprendizaje que utiliza una pequeña cantidad de datos etiquetados y una gran cantidad de datos no etiquetados se llama:",
+                options: {
+                    a: "Aprendizaje Supervisado",
+                    b: "Aprendizaje por Refuerzo",
+                    c: "Aprendizaje Semi-supervisado",
+                    d: "Aprendizaje No Supervisado"
+                },
+                correctAnswer: "c"
+            },
+            {
+                section: "2. Conceptos de Datos y Preprocesamiento",
+                question: "En un conjunto de datos tabular (como una hoja de cálculo), las filas suelen representar:",
+                options: {
+                    a: "Características (Features)",
+                    b: "Observaciones o instancias",
+                    c: "La variable objetivo",
+                    d: "Hiperparámetros"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "En un problema de predicción de precios de viviendas, la 'superficie en m²' o el 'número de habitaciones' serían ejemplos de:",
+                options: {
+                    a: "Variables objetivo (Target)",
+                    b: "Características (Features)",
+                    c: "Observaciones",
+                    d: "Clústeres"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "En ese mismo problema de precios de viviendas, el 'precio' que intentamos predecir se denomina:",
+                options: {
+                    a: "Característica (Feature)",
+                    b: "Variable objetivo (Target)",
+                    c: "Conjunto de prueba",
+                    d: "Centroide"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Por qué es crucial dividir un conjunto de datos en un conjunto de entrenamiento (train) y un conjunto de prueba (test)?",
+                options: {
+                    a: "Para entrenar el modelo más rápidamente usando menos datos.",
+                    b: "Para evaluar la capacidad del modelo de generalizar a datos nuevos y no vistos.",
+                    c: "Para facilitar la visualización de los datos.",
+                    d: "Para cumplir con los requisitos de las librerías de software."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué es el 'sobreajuste' (Overfitting)?",
+                options: {
+                    a: "Ocurre cuando un modelo es demasiado simple y no aprende los patrones de los datos.",
+                    b: "Ocurre cuando un modelo 'memoriza' los datos de entrenamiento (incluido el ruido) y tiene un mal rendimiento con datos nuevos.",
+                    c: "Ocurre cuando el conjunto de datos de prueba es más grande que el de entrenamiento.",
+                    d: "Ocurre cuando se usa regresión en lugar de clasificación."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "El fenómeno opuesto al sobreajuste, donde un modelo es demasiado simple para capturar la complejidad de los datos, se llama:",
+                options: {
+                    a: "Subajuste (Underfitting)",
+                    b: "Regularización",
+                    c: "Validación cruzada",
+                    d: "Bagging"
+                },
+                correctAnswer: "a"
+            },
+            {
+                question: "Una variable que representa categorías, como 'Rojo', 'Verde', 'Azul' o 'Sí'/'No', se llama:",
+                options: {
+                    a: "Variable continua",
+                    b: "Variable categórica",
+                    c: "Variable objetivo",
+                    d: "Variable de agrupación"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Para qué se utiliza la técnica de 'One-Hot Encoding'?",
+                options: {
+                    a: "Para normalizar variables numéricas.",
+                    b: "Para convertir variables categóricas en un formato numérico que los algoritmos de ML puedan entender.",
+                    c: "Para eliminar valores atípicos (outliers).",
+                    d: "Para reducir la dimensionalidad de los datos."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué es un 'outlier' o valor atípico?",
+                options: {
+                    a: "Un punto de datos que falta en el dataset.",
+                    b: "La media de todas las variables.",
+                    c: "Un punto de datos que se desvía significativamente de la mayoría de las otras observaciones.",
+                    d: "Un punto de datos en el conjunto de prueba."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "El método IQR (Rango Intercuartílico) se utiliza comúnmente para:",
+                options: {
+                    a: "Entrenar redes neuronales.",
+                    b: "Detectar outliers.",
+                    c: "Medir la precisión de un modelo de regresión.",
+                    d: "Agrupar datos en clústeres."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "La 'Normalización' (Min-Max Scaling) de características numéricas consiste en:",
+                options: {
+                    a: "Eliminar la característica del modelo.",
+                    b: "Convertir la característica a valores categóricos.",
+                    c: "Re-escalar los valores para que estén en un rango específico, comúnmente [0, 1].",
+                    d: "Re-escalar los valores para que tengan una media de 0 y una desviación estándar de 1."
+                },
+                correctAnswer: "c"
+            },
+            {
+                section: "3. Aprendizaje Supervisado: Regresión",
+                question: "¿Cuál es el objetivo principal de una tarea de Regresión?",
+                options: {
+                    a: "Predecir una etiqueta de clase (ej. 'Gato' o 'Perro').",
+                    b: "Predecir un valor numérico continuo (ej. precio, temperatura).",
+                    c: "Agrupar datos similares.",
+                    d: "Encontrar la estructura de los datos."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué tipo de algoritmo de regresión modela la relación entre variables ajustando una línea recta a los datos?",
+                options: {
+                    a: "Regresión Logística",
+                    b: "Regresión Lineal",
+                    c: "K-Means",
+                    d: "Árbol de Decisión"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "En la ecuación de Regresión Lineal y = β₀ + β₁x, ¿qué representa β₁?",
+                options: {
+                    a: "El intercepto (el valor de y cuando x=0).",
+                    b: "El error del modelo.",
+                    c: "La pendiente (cuánto cambia y por cada unidad que cambia x).",
+                    d: "El coeficiente de determinación."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué es la 'regularización' en modelos como Ridge o LASSO?",
+                options: {
+                    a: "Es una técnica para hacer el modelo más complejo.",
+                    b: "Es una técnica para penalizar coeficientes grandes y prevenir el sobreajuste.",
+                    c: "Es el proceso de dividir los datos en entrenamiento y prueba.",
+                    d: "Es un método para limpiar datos faltantes."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Cuál es la principal diferencia entre la regresión Ridge (L2) y la regresión LASSO (L1)?",
+                options: {
+                    a: "Ridge solo funciona para clasificación y LASSO para regresión.",
+                    b: "Ridge puede reducir los coeficientes a cero exacto (selección de características), mientras que LASSO solo los reduce.",
+                    c: "LASSO puede reducir los coeficientes a cero exacto (selección de características), mientras que Ridge solo los acerca a cero.",
+                    d: "Ridge usa el error absoluto medio (MAE) y LASSO usa el error cuadrático medio (RMSE)."
+                },
+                correctAnswer: "c"
+            },
+            {
+                section: "4. Aprendizaje Supervisado: Clasificación",
+                question: "¿Cuál es el objetivo principal de una tarea de Clasificación?",
+                options: {
+                    a: "Predecir un valor numérico (ej. 10.5, 300, -4.2).",
+                    b: "Predecir una etiqueta de clase discreta (ej. 'Fraude' o 'No Fraude').",
+                    c: "Encontrar el número óptimo de grupos en los datos.",
+                    d: "Reducir el número de características."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "Un modelo que predice si un correo electrónico es 'spam' o 'no spam' es un ejemplo de:",
+                options: {
+                    a: "Clasificación multiclase",
+                    b: "Clasificación binaria",
+                    c: "Regresión",
+                    d: "Clustering"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué algoritmo, a pesar de su nombre, se utiliza comúnmente para tareas de clasificación binaria?",
+                options: {
+                    a: "Regresión Lineal",
+                    b: "K-Means",
+                    c: "Regresión Logística",
+                    d: "Análisis de Componentes Principales (PCA)"
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué es un 'Árbol de Decisión'?",
+                options: {
+                    a: "Un modelo que agrupa datos basado en la similitud de sus centroides.",
+                    b: "Un modelo de aprendizaje supervisado que utiliza una serie de 'preguntas' (divisiones) para tomar una decisión.",
+                    c: "Un método para encontrar la línea recta que mejor se ajusta a los datos.",
+                    d: "Un algoritmo de aprendizaje no supervisado para reducir la dimensionalidad."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué es un 'hiperplano' en el contexto de las Máquinas de Vectores de Soporte (SVM)?",
+                options: {
+                    a: "La línea de regresión promedio.",
+                    b: "El límite de decisión que el algoritmo intenta encontrar para separar las clases.",
+                    c: "El centro de un clúster.",
+                    d: "La raíz de un árbol de decisión."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué son los 'vectores de soporte' en un algoritmo SVM?",
+                options: {
+                    a: "Todos los puntos de datos en el conjunto de entrenamiento.",
+                    b: "Los puntos de datos que están más cerca del límite de decisión y que son cruciales para definirlo.",
+                    c: "Los errores de predicción del modelo.",
+                    d: "Los coeficientes de la regresión logística."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "El algoritmo de 'Random Forest' (Bosque Aleatorio) se basa en la combinación de muchos:",
+                options: {
+                    a: "Modelos de K-Means",
+                    b: "Modelos de Regresión Lineal",
+                    c: "Árboles de Decisión",
+                    d: "Modelos SVM"
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué es el 'Bagging' (Bootstrap Aggregating), la técnica principal detrás de Random Forest?",
+                options: {
+                    a: "Entrenar modelos secuencialmente, donde cada uno corrige los errores del anterior.",
+                    b: "Entrenar múltiples modelos en paralelo sobre diferentes submuestras aleatorias de los datos y promediar sus resultados.",
+                    c: "Usar un solo árbol muy profundo.",
+                    d: "Penalizar los coeficientes del modelo para evitar el sobreajuste."
+                },
+                correctAnswer: "b"
+            },
+            {
+                section: "5. Aprendizaje No Supervisado",
+                question: "¿Qué algoritmo de clustering divide los datos en 'K' grupos basándose en la distancia a los centros de esos grupos (centroides)?",
+                options: {
+                    a: "SVM (Máquinas de Vectores de Soporte)",
+                    b: "Regresión Lineal",
+                    c: "K-Means",
+                    d: "Random Forest"
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "En el algoritmo K-Means, un 'centroide' es:",
+                options: {
+                    a: "Un punto de datos que es un outlier.",
+                    b: "La predicción final del modelo.",
+                    c: "El punto central (la media) de todos los puntos de datos que pertenecen a un clúster.",
+                    d: "El límite de decisión entre dos clústeres."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Cuál es uno de los principales desafíos al usar K-Means?",
+                options: {
+                    a: "Requiere que los datos estén perfectamente etiquetados.",
+                    b: "Solo funciona con datos categóricos.",
+                    c: "Se debe pre-especificar el número de clústeres (K).",
+                    d: "Es muy propenso al sobreajuste."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "El 'Análisis de Componentes Principales' (PCA) es una técnica de:",
+                options: {
+                    a: "Clasificación",
+                    b: "Regresión",
+                    c: "Reducción de dimensionalidad (aprendizaje no supervisado).",
+                    d: "Aprendizaje por refuerzo."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Cuál es el propósito de la 'reducción de dimensionalidad'?",
+                options: {
+                    a: "Aumentar la cantidad de características para hacer el modelo más preciso.",
+                    b: "Reducir el número de características (dimensiones) de un dataset, perdiendo la menor cantidad de información posible.",
+                    c: "Convertir datos numéricos en categóricos.",
+                    d: "Eliminar todas las observaciones que contengan outliers."
+                },
+                correctAnswer: "b"
+            },
+            {
+                section: "6. Métricas de Evaluación",
+                question: "¿Qué métrica de regresión mide el promedio de los errores sin importar su dirección (usando el valor absoluto)?",
+                options: {
+                    a: "Error Cuadrático Medio (MSE)",
+                    b: "Error Absoluto Medio (MAE)",
+                    c: "Coeficiente de Determinación (R²)",
+                    d: "Precisión (Accuracy)"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué métrica de regresión penaliza más los errores grandes (debido a que eleva los errores al cuadrado)?",
+                options: {
+                    a: "Error Absoluto Medio (MAE)",
+                    b: "Error Cuadrático Medio Raíz (RMSE)",
+                    c: "R²",
+                    d: "F1-Score"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "El Coeficiente de Determinación (R²) mide:",
+                options: {
+                    a: "El error promedio de predicción en las unidades originales.",
+                    b: "La proporción de la varianza en la variable dependiente que es predecible a partir de las variables independientes.",
+                    c: "Cuántos puntos de datos fueron clasificados correctamente.",
+                    d: "El área bajo la curva ROC."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué es una 'Matriz de Confusión'?",
+                options: {
+                    a: "Una métrica usada para regresión que mide la confusión del modelo.",
+                    b: "Una tabla usada en clasificación para resumir el rendimiento, mostrando Verdaderos Positivos, Falsos Positivos, etc.",
+                    c: "Un gráfico de dispersión de las predicciones vs. los valores reales.",
+                    d: "El conjunto de hiperparámetros que no funcionaron."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "La métrica 'Accuracy' (Exactitud) se calcula como:",
+                options: {
+                    a: "(Verdaderos Positivos) / (Verdaderos Positivos + Falsos Positivos)",
+                    b: "(Total de Predicciones Correctas) / (Total de Predicciones)",
+                    c: "(Verdaderos Positivos) / (Verdaderos Positivos + Falsos Negativos)",
+                    d: "2 * (Precisión * Recall) / (Precisión + Recall)"
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "La métrica 'Precision' (Precisión) responde a la pregunta:",
+                options: {
+                    a: "De todos los positivos reales, ¿cuántos identificamos correctamente?",
+                    b: "¿Qué porcentaje de todas nuestras predicciones fue correcto?",
+                    c: "De todos los que predijimos como positivos, ¿cuántos fueron realmente positivos?",
+                    d: "¿Qué tan grande es el error promedio?"
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "La métrica 'Recall' (Sensibilidad o Exhaustividad) responde a la pregunta:",
+                options: {
+                    a: "De todos los positivos reales, ¿cuántos identificamos correctamente?",
+                    b: "¿Qué porcentaje de todas nuestras predicciones fue correcto?",
+                    c: "De todos los que predijimos como positivos, ¿cuántos fueron realmente positivos?",
+                    d: "¿Qué tan bien funciona el modelo en promedio?"
+                },
+                correctAnswer: "a"
+            },
+            {
+                question: "En un problema de detección de fraude (donde 'fraude' es la clase positiva), un 'Falso Negativo' sería:",
+                options: {
+                    a: "El modelo dice 'fraude' y sí era fraude.",
+                    b: "El modelo dice 'fraude' pero no era fraude.",
+                    c: "El modelo dice 'no fraude' pero sí era fraude. (El peor error)",
+                    d: "El modelo dice 'no fraude' y no era fraude."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Cuándo es el 'Accuracy' una métrica engañosa?",
+                options: {
+                    a: "Cuando el conjunto de datos está perfectamente balanceado.",
+                    b: "Cuando se trata de un problema de regresión.",
+                    c: "Cuando el conjunto de datos está muy desbalanceado (ej. 99% 'no fraude', 1% 'fraude').",
+                    d: "Cuando el modelo está sobreajustado."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "El 'F1-Score' es la media armónica de:",
+                options: {
+                    a: "MAE y RMSE",
+                    b: "Accuracy y R²",
+                    c: "Precisión (Precision) y Sensibilidad (Recall)",
+                    d: "Verdaderos Positivos y Falsos Negativos"
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué mide el 'AUC' (Area Under the Curve) de una curva ROC?",
+                options: {
+                    a: "El error absoluto del modelo.",
+                    b: "La capacidad general del modelo para discriminar entre las clases positiva y negativa.",
+                    c: "El número de clústeres óptimo.",
+                    d: "El punto de corte para la regresión logística."
+                },
+                correctAnswer: "b"
+            },
+            {
+                question: "Un modelo con un AUC de 0.5 significa que:",
+                options: {
+                    a: "Es un modelo perfecto.",
+                    b: "Es peor que adivinar al azar.",
+                    c: "No es mejor que adivinar al azar (como lanzar una moneda).",
+                    d: "Es un modelo excelente, pero no perfecto."
+                },
+                correctAnswer: "c"
+            },
+            {
+                question: "¿Qué es un 'hiperparámetro'?",
+                options: {
+                    a: "Un parámetro que el modelo aprende durante el entrenamiento (ej. los coeficientes β).",
+                    b: "Una configuración del modelo que se define antes del entrenamiento (ej. el número 'K' en K-Means o la profundidad de un árbol).",
+                    c: "La variable objetivo del modelo.",
+                    d: "La métrica de evaluación utilizada."
+                },
+                correctAnswer: "b"
+            }
+        ];
+
+        const userInfoScreen = document.getElementById('user-info-screen');
+        const userInfoForm = document.getElementById('user-info-form');
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+        const nameErrorDiv = document.getElementById('name-error');
+
+        const quizContainer = document.querySelector('.quiz-container');
+        const quizForm = document.getElementById('quiz-form');
+        const submitButton = document.getElementById('submit-button');
+        const resultsDiv = document.getElementById('results');
+
+        let currentSection = "";
+        let userFirstName = "";
+        let userLastName = "";
+        let startTime;
+        const quizPdfTitle = "Quiz: Machine Learning";
+        const pdfFileNameBase = "Resultados_Machine_Learning";
+
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            let timeString = "";
+            if (minutes > 0) {
+                timeString += `${minutes} minuto${minutes > 1 ? 's' : ''}`;
+            }
+            if (seconds > 0) {
+                if (minutes > 0) timeString += " y ";
+                timeString += `${seconds} segundo${seconds > 1 ? 's' : ''}`;
+            }
+            if (timeString === "") return "0 segundos";
+            return timeString;
+        }
+
+        function generateAndDownloadPDF(score, totalQuestions, duration, studentFirstName, studentLastName) {
+            const pdf = new jsPDF();
+            const fileName = `${studentFirstName}_${studentLastName}_${pdfFileNameBase}.pdf`;
+            let yPosition = 20;
+
+            pdf.setFontSize(18);
+            pdf.text(quizPdfTitle, 105, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            pdf.setFontSize(12);
+            pdf.text(`Participante: ${studentFirstName} ${studentLastName}`, 20, yPosition);
+            yPosition += 10;
+            pdf.line(20, yPosition - 5, 190, yPosition - 5);
+
+            pdf.text(`Puntuación: ${score} de ${totalQuestions}`, 20, yPosition);
+            yPosition += 7;
+            pdf.text(`Tiempo Empleado: ${duration}`, 20, yPosition);
+            yPosition += 10;
+            pdf.line(20, yPosition - 5, 190, yPosition - 5);
+
+            pdf.save(fileName);
+        }
+
+
+        function renderQuiz() {
+            let html = '';
+            let firstSectionProcessed = false;
+
+            quizData.forEach((item, index) => {
+                const sectionName = item.section || "Preguntas Generales";
+
+                if (sectionName !== currentSection || !firstSectionProcessed) {
+                    currentSection = sectionName;
+                    html += `<h2 class="section-title">${currentSection}</h2>`;
+                    firstSectionProcessed = true;
+                }
+
+                let questionText = item.question;
+                const questionNumberMatch = questionText.match(/^(\d+\.\s*)/);
+                if (questionNumberMatch) {
+                    questionText = questionText.replace(questionNumberMatch[0], '').trim();
+                }
+
+
+                html += `<div class="question-block" id="question-${index}">`;
+                html += `<p class="question-text">${index + 1}. ${questionText}</p>`;
+                html += `<div class="options">`;
+                for (const key in item.options) {
+                    html += `
+                        <label for="q${index}_${key}">
+                            <input type="radio" name="question${index}" id="q${index}_${key}" value="${key}">
+                            ${key.toUpperCase()}. ${item.options[key]}
+                        </label>
+                    `;
+                }
+                html += `</div></div>`;
+            });
+            quizForm.innerHTML = html;
+        }
+
+        function evaluateQuiz() {
+            const endTime = new Date();
+            const durationSeconds = Math.round((endTime - startTime) / 1000);
+            const formattedDuration = formatTime(durationSeconds);
+
+            let score = 0;
+            const radioButtons = quizForm.querySelectorAll('input[type="radio"]');
+
+            radioButtons.forEach(radio => {
+                radio.disabled = true;
+            });
+
+            quizData.forEach((item, index) => {
+                const selectedOption = quizForm.querySelector(`input[name="question${index}"]:checked`);
+                const optionLabels = quizForm.querySelectorAll(`#question-${index} .options label`);
+
+                optionLabels.forEach(label => {
+                    const radioInput = label.querySelector('input[type="radio"]');
+                    if (radioInput.value.toLowerCase() === item.correctAnswer.toLowerCase()) {
+                        label.classList.add('correct-answer');
+                    }
+                });
+
+                if (selectedOption) {
+                    const selectedLabel = selectedOption.parentElement;
+                    if (selectedOption.value.toLowerCase() === item.correctAnswer.toLowerCase()) {
+                        score++;
+                    } else {
+                        selectedLabel.classList.add('incorrect-answer');
+                        selectedLabel.classList.add('user-selected');
+                    }
+                }
+            });
+
+            generateAndDownloadPDF(score, quizData.length, formattedDuration, userFirstName, userLastName);
+
+            resultsDiv.innerHTML = `
+                <p>Evaluación completada por: <strong>${userFirstName} ${userLastName}</strong></p>
+                <p>Tu puntuación es: <strong>${score} de ${quizData.length}</strong></p>
+                <p>Tiempo empleado: <strong>${formattedDuration}</strong></p>
+                <p class="pdf-info">Se ha descargado un archivo PDF con tus resultados (${userFirstName}_${userLastName}_${pdfFileNameBase}.pdf).</p>
+            `;
+
+            const recipientEmail = "claumiseimbett@gmail.com";
+            const emailSubject = `Resultados del ${quizPdfTitle} - ${userFirstName} ${userLastName}`;
+            const emailBody = `Nombre: ${userFirstName} ${userLastName}\n\nPuntuación: ${score}/${quizData.length}\n\nTiempo empleado: ${formattedDuration}\n\n---\nPor favor, adjunte el archivo PDF '${userFirstName}_${userLastName}_${pdfFileNameBase}.pdf' que se ha descargado con los resultados.\nEste es un correo autogenerado.`;
+
+            const gmailURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipientEmail)}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
+            resultsDiv.innerHTML += `<a href="${gmailURL}" id="email-link" target="_blank">Enviar Resultados por Gmail</a>`;
+            resultsDiv.classList.remove('hidden');
+            submitButton.style.display = 'none';
+        }
+
+        userInfoForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            userFirstName = firstNameInput.value.trim();
+            userLastName = lastNameInput.value.trim();
+
+            if (userFirstName === "" || userLastName === "") {
+                nameErrorDiv.style.display = 'block';
+            } else {
+                nameErrorDiv.style.display = 'none';
+                userInfoScreen.classList.add('hidden');
+                setTimeout(() => {
+                     userInfoScreen.style.display = 'none';
+                     quizContainer.style.display = 'block';
+                     startTime = new Date();
+                     renderQuiz();
+                }, 500);
+            }
+        });
+
+        submitButton.addEventListener('click', evaluateQuiz);
+
+    </script>
+</body>
+</html>
